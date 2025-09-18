@@ -1,200 +1,94 @@
 const urlBase = "http://localhost:8080/LAMPAPI/";
-const phpBase = ".php"
 const loginUrlBase = "http://localhost:8080/contact/";
-function doLogin() {
 
-	let userLogin = document.getElementById("user-login").value;
-	let userPassword = document.getElementById("user-password").value;
-
-
-	let userLoginInfo = { "login": userLogin, "password": userPassword }
-	let jsonUserLoginInfo = JSON.stringify(userLoginInfo);
-
-	// xmlhttprequest 
-	let htr = new XMLHttpRequest();
-	let url = urlBase + "Login" + phpBase;
-	htr.onreadystatechange = function() {
-		if (this.readyState == 4 && this.status == 200) {
-			const result = JSON.parse(htr.responseText);
-			if (result.status == "success") {
-				window.location.href = loginUrlBase + "contact" + phpBase;
-
-			} else {
-				let spanLoginResult = document.getElementById("login-result");
-				spanLoginResult.innerHTML = "login failed";
-			}
-		}
-	};
-	htr.open("POST", url, true);
-	htr.setRequestHeader("Content-Type", "application/json");
-	htr.send(jsonUserLoginInfo);
-
+async function fetchJSON(path, opts = {}) {
+  const res = await fetch(urlBase + path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: opts.body ? JSON.stringify(opts.body) : "{}",
+  });
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { return { status: "failure", raw: text }; }
 }
 
-function doRegistration() {
-
-	let userLogin = document.getElementById("register-user").value;
-	let userPassword = document.getElementById("register-password").value;
-	let userFirstname = document.getElementById("register-fname").value;
-	let userLastname = document.getElementById("register-lname").value;
-
-	let userInfo = { "firstname": userFirstname, "lastname": userLastname, "login": userLogin, "password": userPassword };
-	let jsonUserInfo = JSON.stringify(userInfo);
-
-	let url = urlBase + "Register" + phpBase;
-
-	let htr = new XMLHttpRequest();
-	htr.onreadystatechange = function() {
-		if (this.readyState == 4 && this.status == 200) {
-			const result = JSON.parse(htr.responseText);
-			if (result.status == "success") {
-				window.location.href = loginUrlBase + "contact" + phpBase;
-			} else {
-
-				let spanRegisterResult = document.getElementById("register-result");
-				spanRegisterResult.innerHTML = result.message;
-			}
-		}
-	}
-	htr.open("POST", url, true);
-	htr.setRequestHeader("Content-Type", "application/json");
-	htr.send(jsonUserInfo);
+function setText(id, msg) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = msg || "";
 }
 
-//	Allow use of enter key to submit add contact input after filling out email
-function checkEnterContact() {
-	if(event.key === "Enter") {
-		document.getElementById("add-button").click();
-	}
+function show(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = "";
 }
 
-function addContact() {
-	let contactFirstName = document.getElementById("contact-fname").value;
-	let contactLastName = document.getElementById("contact-lname").value;
-	let contactPhone = document.getElementById("contact-phone").value;
-	let contactEmail = document.getElementById("contact-email").value;
-	
-	//	Validate no empty or incorrect fields
-	let emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-	let phoneRegex = /^\d{10}$/;
-	
-	let valid = true;
-	
-	//	Highlight the field and show warning next to input
-	if(contactFirstName  == "") {
-		incorrectField("contact-fname", "problem-contact-fname");
-		valid = false;
-	}
-	else {
-		document.getElementById("contact-fname").style = '';
-		document.getElementById("problem-contact-fname").style.display = "none";
-	}
-	
-	if(contactLastName == "") {
-		incorrectField("contact-lname", "problem-contact-lname");
-		valid = false;
-	}
-	else {
-		document.getElementById("contact-lname").style = '';
-		document.getElementById("problem-contact-lname").style.display = "none";
-	}
-	
-	if (!emailRegex.test(contactEmail)) {
-		incorrectField("contact-email", "problem-email");
-		valid = false;
-	}
-	else {
-		document.getElementById("contact-email").style = '';
-		document.getElementById("problem-email").style.display = "none";
-	}
-
-	if (!phoneRegex.test(contactPhone)) {
-		incorrectField("contact-phone", "problem-phone");
-		valid = false;
-	}
-	else {
-		document.getElementById("contact-phone").style = '';
-		document.getElementById("problem-phone").style.display = "none";
-	}
-	
-	if(!valid)
-		return;
-
-	// Add the contact via API
-	let contactInfo = { "firstname": contactFirstName, "lastname": contactLastName, "phone": contactPhone, "email": contactEmail };
-	let jsonContactInfo = JSON.stringify(contactInfo);
-
-	let url = urlBase + "Add_Contact" + phpBase;
-	let htr = new XMLHttpRequest();
-
-	htr.onreadystatechange = function() {
-		if (this.readyState == 4 && this.status == 200) {
-			const result = JSON.parse(htr.responseText);
-			let spanAddContactResult = document.getElementById("add-contact-result");
-			spanAddContactResult.innerHTML = result.message;
-		}
-	}
-	htr.open("POST", url, true);
-	htr.setRequestHeader("Content-Type", "application/json");
-	htr.send(jsonContactInfo);
-	
-	//	Hide box after completion
-	hideAddContact();
-}
-
-function doLogout() {
-	window.location.href = loginUrlBase + "logout" + phpBase;
+function hide(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = "none";
 }
 
 function showRegister() {
-	document.getElementById("login-div").style.display = "none";
-	document.getElementById("register-div").style.display = "block";
+  hide("loginDiv");
+  show("registerDiv");
+  setText("loginResult", "");
+  setText("registerResult", "");
 }
 
 function showLogin() {
-	document.getElementById("register-div").style.display = "none";
-	document.getElementById("login-div").style.display = "block";
+  show("loginDiv");
+  hide("registerDiv");
+  setText("loginResult", "");
+  setText("registerResult", "");
 }
 
-function showAddContact() {
-	//	Reset all input fields to their default state
-	resetAddFields();
-	
-	//	Gray out background
-	document.getElementById("add-background").style.display = "block";
-
-	document.getElementById("add-contact-div").style.display = "block";
+async function doLogin() {
+  const login = (document.getElementById("userLogin")?.value || "").trim();
+  const password = document.getElementById("userPassword")?.value || "";
+  if (!login || !password) { setText("loginResult", "Please enter username and password."); return; }
+  const data = await fetchJSON("Login.php", { body: { login, password } });
+  if (data?.status === "success") {
+    window.location.href = loginUrlBase + "contact.php";
+  } else {
+    setText("loginResult", "Invalid credentials.");
+  }
 }
 
-function hideAddContact() {
-	//	Reset all input fields to their default state
-	resetAddFields();
-	
-	//	Remove grayed out background
-	document.getElementById("add-background").style.display = "none";
-
-	//	Switch back to searchbar with contact list
-	document.getElementById("error-message").style.display = "none";
-	document.getElementById("add-contact-div").style.display = "none";
+async function doRegistration() {
+  const firstname = (document.getElementById("newFirstName")?.value || "").trim();
+  const lastname = (document.getElementById("newLastName")?.value || "").trim();
+  const login = (document.getElementById("newUser")?.value || "").trim();
+  const password = document.getElementById("newPass")?.value || "";
+  if (!firstname || !lastname || !login || !password) { setText("registerResult", "Please fill out all fields."); return; }
+  const data = await fetchJSON("Register.php", { body: { firstname, lastname, login, password } });
+  if (data?.status === "success" || data?.message?.toLowerCase?.().includes("success")) {
+    setText("registerResult", "Account created. You can now log in.");
+    showLogin();
+    const u = document.getElementById("userLogin");
+    const p = document.getElementById("userPassword");
+    if (u) u.value = login;
+    if (p) p.value = password;
+  } else {
+    setText("registerResult", "Registration failed.");
+  }
 }
 
-function resetAddFields() {
-	resetField("contact-fname", "problem-contact-fname");
-	resetField("contact-lname", "problem-contact-lname");
-	resetField("contact-phone", "problem-phone");
-	resetField("contact-email", "problem-email");
+async function doLogout() {
+  try { await fetchJSON("Logout.php", { body: {} }); } catch {}
+  window.location.href = "http://localhost:8080/";
 }
 
-function resetField(fieldId, problemId) {
-	document.getElementById(fieldId).value = '';
-	document.getElementById(fieldId).style = '';
-	document.getElementById(problemId).style.display = "none";
+async function addContactDemo(firstname, lastname, phone, email) {
+  return await fetchJSON("Add_Contact.php", { body: { firstname, lastname, phone, email } });
 }
 
-function incorrectField(fieldId, problemId) {
-	document.getElementById(fieldId).style =
-	"background-color: red; box-shadow:  0 4px 12px rgba(1, 0, 0, 0);";
-	
-	document.getElementById(problemId).style.display = "inline";
-	document.getElementById("error-message").style.display = "block";
+async function searchContactsDemo(term = "") {
+  return await fetchJSON("Search_Contacts.php", { body: { search: term } });
 }
+
+window.addEventListener("DOMContentLoaded", () => {
+  showLogin();
+  const loginBtn = document.querySelector('button.primary[onclick="doLogin()"]');
+  const regBtn = document.querySelector('button.primary[onclick="doRegistration()"]');
+  if (loginBtn) loginBtn.addEventListener("click", (e) => { e.preventDefault?.(); doLogin(); });
+  if (regBtn) regBtn.addEventListener("click", (e) => { e.preventDefault?.(); doRegistration(); });
+});
