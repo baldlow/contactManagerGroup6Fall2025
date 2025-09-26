@@ -14,12 +14,19 @@
   box-sizing: border-box;
 }
 
+html {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
   background-color: #044a62;
   color: #fcf9ec;
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 a {
